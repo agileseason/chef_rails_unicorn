@@ -22,6 +22,8 @@ systemd_unit "#{app.service(:unicorn)}.service" do
     After=syslog.target network.target
 
     [Service]
+    Type=forking
+    PIDFile=#{app.dir(:shared)}/tmp/pids/unicorn.pid
     SyslogIdentifier=#{app.service(:unicorn)}.service
     User=#{app.user}
     Group=#{app.group}
