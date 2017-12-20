@@ -9,10 +9,10 @@
 
 app = AppHelpers.new node['app']
 
-cmd = <<~CMD.gsub(/\n|  +/, ' ')
+bundle_exec = <<~CMD.gsub(/\n|  +/, ' ')
   RAILS_ENV=#{app.env}
   PATH=/home/#{app.user}/.rbenv/bin:/home/#{app.user}/.rbenv/shims:$PATH
-    bundle exec unicorn -D -E #{app.env} -c #{app.dir(:root)}/config/unicorn/#{app.env}.rb
+    bundle exec
 CMD
 
 systemd_unit "#{app.service(:unicorn)}.service" do
@@ -22,8 +22,6 @@ systemd_unit "#{app.service(:unicorn)}.service" do
     After=syslog.target network.target
 
     [Service]
-    Type=forking
-    PIDFile=#{app.dir(:shared)}/tmp/pids/unicorn.pid
     SyslogIdentifier=#{app.service(:unicorn)}.service
     User=#{app.user}
     Group=#{app.group}
@@ -31,7 +29,7 @@ systemd_unit "#{app.service(:unicorn)}.service" do
     WorkingDirectory=#{app.dir(:root)}
     Restart=on-failure
 
-    ExecStart=/bin/bash -c '#{cmd}'
+    ExecStart=/bin/bash -c '#{bundle_exec} unicorn -E #{app.env} -c #{app.dir(:root)}/config/unicorn/#{app.env}.rb'
     ExecReload=/bin/kill -s USR2 $MAINPID
     ExecStop=/bin/kill -s QUIT $MAINPID
 
