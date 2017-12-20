@@ -9,20 +9,40 @@
 
 app = AppHelpers.new node['app']
 
-template "/etc/init.d/#{app.service :unicorn}" do
-  source 'init_unicorn.erb'
+cmd = <<~CMD.gsub(/\n|  +/, ' ')
+  RAILS_ENV=#{app.env}
+  PATH=/home/#{app.user}/.rbenv/bin:/home/#{app.user}/.rbenv/shims:$PATH
+    bundle exec unicorn -D -E #{app.env} -c #{app.dir(:root)}/config/unicorn/#{app.env}.rb
+CMD
 
-  variables(
-    app_name: app.name,
-    app_user: app.user,
-    app_env: app.env,
-    app_root: app.dir(:root),
-    app_shared: app.dir(:shared)
-  )
+systemd_unit "#{app.service(:unicorn)}.service" do
+  content <<~SERVICE
+    [Unit]
+    Description=Unicorn for #{app.name} #{app.env}
+    After=syslog.target network.target
 
-  mode '0755'
-end
+    [Service]
+    Type=forking
+    PIDFile=#{app.dir(:shared)}/tmp/pids/unicorn.pid
+    SyslogIdentifier=#{app.service(:unicorn)}.service
+    User=#{app.user}
+    Group=#{app.group}
+    UMask=0002
+    WorkingDirectory=#{app.dir(:root)}
+    Restart=on-failure
 
-if File.exists? app.dir(:root)
-  service(app.service(:unicorn)) { action :enable }
+    ExecStart=/bin/bash -c '#{cmd}'
+    ExecReload=/bin/kill -s USR2 $MAINPID
+    ExecStop=/bin/kill -s QUIT $MAINPID
+
+    StandardOutput=journal
+    StandardError=journal
+
+    [Install]
+    WantedBy=multi-user.target
+  SERVICE
+
+  triggers_reload true
+  verify false
+  action %i[create enable start]
 end
