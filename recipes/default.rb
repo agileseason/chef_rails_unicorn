@@ -31,7 +31,7 @@ systemd_unit "#{app.service(:unicorn)}.service" do
     WorkingDirectory=#{app.dir(:root)}
     Restart=on-failure
 
-    ExecStart=/bin/bash -c '#{bundle_exec} unicorn -E #{app.env} -c #{app.dir(:root)}/config/unicorn/#{app.env}.rb'
+    ExecStart=/bin/bash -c '#{bundle_exec} unicorn -D -E #{app.env} -c #{app.dir(:root)}/config/unicorn/#{app.env}.rb'
     ExecReload=/bin/kill -s USR2 $MAINPID
     ExecStop=/bin/kill -s QUIT $MAINPID
 
