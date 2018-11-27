@@ -1,4 +1,4 @@
-ingate-unicorn Cookbook
+Unicorn Cookbook
 =======================
 TODO: Enter the cookbook description here.
 

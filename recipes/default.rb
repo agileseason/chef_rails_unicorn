@@ -30,6 +30,7 @@ systemd_unit "#{app.service(:unicorn)}.service" do
     UMask=0002
     WorkingDirectory=#{app.dir(:root)}
     Restart=on-failure
+    LimitNOFILE=49152
 
     ExecStart=/bin/bash -c '#{bundle_exec} unicorn -D -E #{app.env} -c #{app.dir(:root)}/config/unicorn/#{app.env}.rb'
     ExecReload=/bin/kill -s USR2 $MAINPID
