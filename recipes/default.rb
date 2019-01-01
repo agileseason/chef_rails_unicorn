@@ -15,6 +15,13 @@ bundle_exec = <<~CMD.gsub(/\n|  +/, ' ')
     bundle exec
 CMD
 
+env = node['chef_rails_unicorn']['env']
+  &.split("\n")
+  &.map(&:strip)
+  &.select { |line| line != '' }
+  &.map { |line| "Environment=#{line}" }
+  &.join("\n")
+
 systemd_unit "#{app.service(:unicorn)}.service" do
   content <<~SERVICE
     [Unit]
@@ -31,6 +38,7 @@ systemd_unit "#{app.service(:unicorn)}.service" do
     WorkingDirectory=#{app.dir(:root)}
     Restart=on-failure
     LimitNOFILE=49152
+    #{env}
 
     ExecStart=/bin/bash -c '#{bundle_exec} unicorn -D -E #{app.env} -c #{app.dir(:root)}/config/unicorn/#{app.env}.rb'
     ExecReload=/bin/kill -s USR2 $MAINPID
