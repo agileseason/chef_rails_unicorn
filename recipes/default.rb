@@ -30,7 +30,7 @@ systemd_unit "#{app.service(:unicorn)}.service" do
 
     [Service]
     Type=forking
-    PIDFile=#{app.dir(:shared)}/tmp/pids/unicorn.pid
+    PIDFile=#{app.dir(:shared)}/tmp/pids/#{node['chef_rails_unicorn']['pid_file']}.pid
     SyslogIdentifier=#{app.service(:unicorn)}.service
     User=#{app.user}
     Group=#{app.group}
